@@ -14,18 +14,18 @@ train_file = 'b_depressed.csv'
 dataset = pandas.read_csv(train_file)
 
 # ======================================================================================================================
-#   clasification_column(last one) if someone is depressed or not
+#   classification_column(last one) specife if someone is depressed or not
 #   rest columns 1-22 are classifiers
 # ======================================================================================================================
 
-clasification_column = dataset[dataset.columns[-1]]
+classification_column = dataset[dataset.columns[-1]]
 feature_set = dataset[dataset.columns[1:21]]
 
 # ======================================================================================================================
 #   split data set to specific subsets
 # ======================================================================================================================
 
-X_train, X_test, Y_train, Y_test = train_test_split(feature_set, clasification_column, test_size=0.33)
+X_train, X_test, Y_train, Y_test = train_test_split(feature_set, classification_column, test_size=0.33)
 
 # ======================================================================================================================
 #  Build a decision tree classifier
@@ -40,7 +40,7 @@ classifier = DecisionTreeClassifier(max_depth=5)
 # ======================================================================================================================
 
 classifier.fit(X_train, Y_train)
-class_names = clasification_column.unique()
+class_names = classification_column.unique()
 class_names = class_names.astype(str)
 feature_names = dataset.columns[1:21]
 
@@ -60,16 +60,26 @@ plt.show()
 
 
 # ======================================================================================================================
-#   predicted class for each sample
+#   predict class for each sample
+#   and estimate the prediction quality
 # ======================================================================================================================
 
-print(classifier.predict(X_test[0:-1]))
+def count_quality(write_mode):
+    prediction = classifier.predict(X_test.loc[:])
+    counter1 = 0
+    for i in range(0, Y_test.size):
+        if prediction[i] == Y_test.values[i]:
+            counter1 = counter1 + 1
+    print(f"prediction quality: {round(counter1 / Y_test.size * 100, 2)}%")
+    stream = open("quality.txt", write_mode)
+    stream.write(f"prediction quality: {round(counter1 / Y_test.size * 100, 2)}% \n")
+    stream.close()
+
+
+count_quality("w")
 
 classifier = RandomForestClassifier(max_depth=3, n_estimators=9)
 classifier.fit(X_train, Y_train)
-
-
-print(len(classifier.estimators_))
 
 # ======================================================================================================================
 #   create an image for every separate tree
@@ -83,7 +93,7 @@ fig = plt.figure(figsize=(18, 18))
 fig.tight_layout(pad=0.8)
 
 for tree_id, tree in enumerate(classifier.estimators_):
-    ax = fig.add_subplot(3, 3, tree_id + 1 )
+    ax = fig.add_subplot(3, 3, tree_id + 1)
     ax.title.set_text(f'tree{tree_id:02d}')
     img = cv2.imread(f'tree{tree_id:02d}.png')
     ax.imshow(img)
@@ -91,3 +101,5 @@ for tree_id, tree in enumerate(classifier.estimators_):
     ax.axes.get_yaxis().set_visible(False)
 
 plt.show()
+
+count_quality("a")
